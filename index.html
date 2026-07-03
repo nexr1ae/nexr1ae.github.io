@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nevin Manoj — NEXR1.AE Motion Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a1312;
+    --surface: #0f1a18;
+    --surface-2: #16241f;
+    --text: #edede6;
+    --muted: #8ca39d;
+    --teal: #2ec4b6;
+    --teal-dim: #1c7f76;
+    --orange: #ff6b35;
+    --pink: #ff8fab;
+    --gold: #ffd166;
+    --line: rgba(237,237,230,0.09);
+    --glass-bg: rgba(237,237,230,0.06);
+    --glass-border: rgba(237,237,230,0.22);
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  body::before{
+    content:""; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:0.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode:overlay;
+  }
+  body::after{
+    content:""; position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+  }
+
+  /* AMBIENT STARFIELD */
+  .starfield{ position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+  .star-dot{ position:absolute; border-radius:50%; background:var(--text); animation:twinkle 3s ease-in-out infinite; }
+  @keyframes twinkle{ 0%,100%{ opacity:0.15; } 50%{ opacity:0.9; } }
+
+  .eyebrow{
+    font-family:'Space Mono', monospace; font-size:0.78rem; letter-spacing:0.12em;
+    color:var(--teal); display:flex; align-items:center; gap:0.6rem; margin-bottom:1.4rem; text-transform:uppercase;
+  }
+  .eyebrow::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--orange); box-shadow:0 0 8px var(--orange); }
+
+  h1,h2,h3{ font-family:'Unbounded', sans-serif; text-transform:uppercase; letter-spacing:0.01em; font-weight:800; line-height:0.98; }
+
+  section{ position:relative; z-index:2; padding:min(14vh,7rem) 6vw; max-width:1400px; margin:0 auto; }
+
+  /* IRIS INTRO */
+  .iris{
+    position:fixed; top:50%; left:50%; width:10px; height:10px; margin:-5px 0 0 -5px;
+    border-radius:50%; background:transparent; box-shadow:0 0 0 100vmax var(--bg);
+    z-index:500; pointer-events:none;
+    transition:width 1.4s cubic-bezier(.16,.8,.3,1), height 1.4s cubic-bezier(.16,.8,.3,1), margin 1.4s cubic-bezier(.16,.8,.3,1);
+  }
+  .iris::after{ content:""; position:absolute; inset:-2px; border-radius:50%; border:2px solid rgba(255,107,53,0.5); }
+  .iris.open{ width:2800px; height:2800px; margin:-1400px 0 0 -1400px; }
+
+  /* NAV */
+  nav{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:1.2rem 6vw;
+    background:rgba(10,19,18,0.55);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--glass-border);
+  }
+  .brand{ font-family:'Unbounded', sans-serif; font-weight:800; font-size:1.05rem; letter-spacing:0.02em; color:var(--text); text-decoration:none; }
+  .brand span{ color:var(--orange); }
+  .nav-links{ display:flex; gap:2.2rem; list-style:none; font-size:0.8rem; letter-spacing:0.08em; text-transform:uppercase; }
+  .nav-links a{ color:var(--text); text-decoration:none; position:relative; opacity:0.75; transition:opacity 0.3s; }
+  .nav-links a:hover{ opacity:1; }
+  .nav-links a::after{ content:""; position:absolute; left:0; bottom:-6px; width:0%; height:1px; background:var(--orange); transition:width 0.3s ease; }
+  .nav-links a:hover::after{ width:100%; }
+  @media (max-width:720px){ .nav-links{ display:none; } }
+
+  /* HERO */
+  .hero{ min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding-top:10rem; transition:transform 0.2s ease-out; }
+  .hero h1{ font-size:clamp(3rem, 10vw, 7.5rem); display:flex; flex-direction:column; }
+  .hero h1 .line2{ color:var(--teal); }
+  .hero-sub{ margin-top:1.6rem; max-width:36rem; color:var(--muted); font-size:1.05rem; line-height:1.6; }
+  .hero-meta{ display:flex; gap:2.5rem; margin-top:3rem; flex-wrap:wrap; }
+  .hero-meta div{ font-family:'Space Mono',monospace; font-size:0.78rem; color:var(--muted); }
+  .hero-meta strong{ display:block; color:var(--text); font-family:'Inter'; font-size:0.95rem; font-weight:700; margin-top:0.3rem; }
+  .scroll-cue{ position:absolute; bottom:4.5rem; left:6vw; font-family:'Space Mono',monospace; font-size:0.7rem; color:var(--muted); letter-spacing:0.1em; display:flex; align-items:center; gap:0.6rem; }
+  .scroll-cue::after{ content:""; width:1px; height:26px; background:var(--muted); animation:scrollpulse 1.8s infinite; }
+  @keyframes scrollpulse{ 0%{ transform:scaleY(0.2); opacity:0.3; transform-origin:top; } 50%{ transform:scaleY(1); opacity:1; } 100%{ transform:scaleY(0.2); opacity:0.3; transform-origin:bottom; } }
+
+  /* REVEAL */
+  .reveal{ opacity:0; transform:translateY(28px); transition:opacity 0.8s cubic-bezier(.16,.8,.3,1), transform 0.8s cubic-bezier(.16,.8,.3,1); }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+  .xp-card:nth-child(1).reveal, .p-step:nth-child(1).reveal{ transition-delay:0s; }
+  .xp-card:nth-child(2).reveal, .p-step:nth-child(2).reveal{ transition-delay:0.1s; }
+  .xp-card:nth-child(3).reveal, .p-step:nth-child(3).reveal{ transition-delay:0.2s; }
+  .xp-card:nth-child(4).reveal, .p-step:nth-child(4).reveal{ transition-delay:0.3s; }
+
+  /* MARQUEE */
+  .marquee-section{ padding:2.4rem 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); overflow:hidden; background:var(--surface); }
+  .marquee-track{ display:flex; width:max-content; animation:marquee 22s linear infinite; }
+  .marquee-track span{ font-family:'Unbounded', sans-serif; font-weight:600; font-size:1.4rem; letter-spacing:0.01em; color:var(--muted); padding:0 2.2rem; display:flex; align-items:center; gap:2.2rem; white-space:nowrap; text-transform:uppercase; }
+  .marquee-track span.accent-word{ color:var(--teal); }
+  .marquee-track span::after{ content:"✦"; color:var(--orange); font-size:0.9rem; }
+  @keyframes marquee{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+
+  /* 3D SHOWCASE: CUBE + ORBIT + GLASS SHARDS */
+  .figure-section{ min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:3rem; }
+  .figure-caption{ max-width:32rem; }
+  .figure-caption .eyebrow{ justify-content:center; }
+  .figure-caption h2{ font-size:clamp(1.8rem,4.5vw,3rem); margin-bottom:0.8rem; }
+  .figure-caption p{ color:var(--muted); font-size:1rem; line-height:1.6; }
+  .cube-outer{ perspective:1400px; width:320px; height:320px; }
+  .cube-wrap{ position:relative; width:320px; height:320px; display:flex; align-items:center; justify-content:center; transform-style:preserve-3d; transition:transform 0.3s ease-out; }
+  .cube-stage{ width:200px; height:200px; transform-style:preserve-3d; }
+  .cube{ width:200px; height:200px; position:relative; transform-style:preserve-3d; transform:rotateX(-18deg) rotateY(0deg); }
+  .cube .face{ position:absolute; width:200px; height:200px; display:flex; align-items:center; justify-content:center; font-family:'Unbounded', sans-serif; font-weight:800; font-size:1rem; letter-spacing:0.05em; border:1px solid rgba(237,237,230,0.18); }
+  .face.f1{ background:linear-gradient(135deg,var(--teal-dim),var(--surface)); transform:rotateY(0deg) translateZ(100px); }
+  .face.f2{ background:linear-gradient(135deg,var(--orange),#3a1a0d); transform:rotateY(90deg) translateZ(100px); }
+  .face.f3{ background:linear-gradient(135deg,var(--teal),var(--surface-2)); transform:rotateY(180deg) translateZ(100px); }
+  .face.f4{ background:linear-gradient(135deg,#8ca39d,var(--surface)); transform:rotateY(-90deg) translateZ(100px); }
+  .face.f5{ background:linear-gradient(135deg,var(--surface-2),#0a1312); transform:rotateX(90deg) translateZ(100px); }
+  .face.f6{ background:linear-gradient(135deg,#0a1312,var(--surface-2)); transform:rotateX(-90deg) translateZ(100px); }
+
+  .glass-shard{ position:absolute; border-radius:14px; background:linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02)); border:1px solid var(--glass-border); backdrop-filter:blur(6px); transform-style:preserve-3d; }
+  .shard-a{ width:90px; height:140px; top:-10px; left:-70px; animation:shardSpin 16s linear infinite; }
+  .shard-b{ width:70px; height:110px; bottom:-20px; right:-60px; animation:shardSpin 20s linear infinite reverse; }
+  .shard-c{ width:60px; height:90px; top:50%; left:50%; margin:-45px 0 0 -30px; animation:shardSpin 12s linear infinite; }
+  @keyframes shardSpin{ from{ transform:rotateY(0deg); } to{ transform:rotateY(360deg); } }
+
+  .orbit-tilt{ position:absolute; top:50%; left:50%; width:280px; height:280px; margin:-140px 0 0 -140px; transform-style:preserve-3d; }
+  .orbit-tilt.o1{ transform:rotateX(78deg); }
+  .orbit-tilt.o2{ transform:rotateX(78deg) rotateZ(60deg); }
+  .orbit-tilt.o3{ transform:rotateX(78deg) rotateZ(-60deg); }
+  .orbit-spin{ position:absolute; inset:0; }
+  .orbit-tilt.o1 .orbit-spin{ animation:spin360 9s linear infinite; }
+  .orbit-tilt.o2 .orbit-spin{ animation:spin360 13s linear infinite reverse; }
+  .orbit-tilt.o3 .orbit-spin{ animation:spin360 16s linear infinite; }
+  .orbit-ring{ position:absolute; inset:0; border-radius:50%; border:1px solid rgba(237,237,230,0.1); }
+  .sphere{ position:absolute; top:0; left:50%; width:12px; height:12px; border-radius:50%; transform:translate(-50%,-50%); }
+  .o1 .sphere{ background:radial-gradient(circle at 30% 30%, #fff, var(--teal)); box-shadow:0 0 14px var(--teal); }
+  .o2 .sphere{ background:radial-gradient(circle at 30% 30%, #fff, var(--orange)); box-shadow:0 0 14px var(--orange); }
+  .o3 .sphere{ background:radial-gradient(circle at 30% 30%, #fff, var(--pink)); box-shadow:0 0 14px var(--pink); }
+  @keyframes spin360{ from{ transform:rotateZ(0deg); } to{ transform:rotateZ(360deg); } }
+
+  /* 3D PLAYGROUND — ROCKET + PLANET + BALLOONS (AR / kid+adult friendly) */
+  .playground-section{ min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:2.4rem; overflow:hidden; }
+  .ar-badge{ display:inline-flex; align-items:center; gap:0.5rem; font-family:'Space Mono',monospace; font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); border:1px solid rgba(255,209,102,0.4); padding:0.4rem 0.9rem; border-radius:999px; background:rgba(255,209,102,0.06); margin-bottom:0.6rem; }
+  .ar-badge::before{ content:"◈"; }
+  .playground-caption{ max-width:34rem; }
+  .playground-caption .eyebrow{ justify-content:center; }
+  .playground-caption h2{ font-size:clamp(1.8rem,4.5vw,3rem); margin-bottom:0.8rem; }
+  .playground-caption p{ color:var(--muted); font-size:1rem; line-height:1.6; }
+
+  .playground-stage{ position:relative; width:100%; max-width:760px; height:420px; perspective:1600px; }
+
+  /* rocket built from stacked 3D faces */
+  .rocket-outer{ position:absolute; left:18%; top:6%; width:140px; height:280px; perspective:1200px; }
+  .rocket-wrap{ position:relative; width:100%; height:100%; transform-style:preserve-3d; transition:transform 0.3s ease-out; animation:rocketBob 4.5s ease-in-out infinite; }
+  @keyframes rocketBob{ 0%,100%{ margin-top:0px; } 50%{ margin-top:-16px; } }
+  .rocket-body{ position:absolute; left:50%; top:20px; width:70px; height:170px; margin-left:-35px; border-radius:35px 35px 12px 12px; background:linear-gradient(135deg,#f4f4ec,var(--muted)); transform-style:preserve-3d; box-shadow:inset -14px 0 24px rgba(0,0,0,0.25), 0 20px 40px rgba(0,0,0,0.35); }
+  .rocket-window{ position:absolute; left:50%; top:55px; width:34px; height:34px; margin-left:-17px; border-radius:50%; background:radial-gradient(circle at 35% 35%,#eaffff,var(--teal) 70%,var(--teal-dim)); border:5px solid #dcdcd2; box-shadow:0 0 14px rgba(46,196,182,0.6); }
+  .rocket-fin{ position:absolute; top:150px; width:0; height:0; border-style:solid; }
+  .rocket-fin.left{ left:2px; border-width:0 0 46px 34px; border-color:transparent transparent var(--orange) transparent; }
+  .rocket-fin.right{ right:2px; border-width:46px 0 0 34px; border-color:transparent transparent transparent var(--orange); }
+  .rocket-nose{ position:absolute; left:50%; top:-26px; width:0; height:0; margin-left:-35px; border-left:35px solid transparent; border-right:35px solid transparent; border-bottom:46px solid var(--pink); transform:rotate(180deg); }
+  .rocket-flame{ position:absolute; left:50%; top:206px; width:26px; height:44px; margin-left:-13px; border-radius:0 0 50% 50%; background:linear-gradient(180deg,var(--gold),var(--orange) 60%,transparent); animation:flameFlick 0.35s ease-in-out infinite alternate; filter:blur(0.4px); }
+  @keyframes flameFlick{ from{ transform:scaleY(1) scaleX(1); opacity:0.95; } to{ transform:scaleY(1.3) scaleX(0.8); opacity:0.6; } }
+
+  /* saturn-style planet */
+  .planet-outer{ position:absolute; right:6%; top:14%; width:210px; height:210px; perspective:1000px; }
+  .planet-wrap{ position:relative; width:100%; height:100%; transform-style:preserve-3d; animation:planetSpin 20s linear infinite; }
+  @keyframes planetSpin{ from{ transform:rotateY(0deg) rotateX(14deg); } to{ transform:rotateY(360deg) rotateX(14deg); } }
+  .planet-sphere{ position:absolute; left:50%; top:50%; width:110px; height:110px; margin:-55px 0 0 -55px; border-radius:50%; background:radial-gradient(circle at 32% 28%, #fff2d6, var(--gold) 45%, #a3701c 100%); box-shadow:0 0 40px rgba(255,209,102,0.35); }
+  .planet-ring{ position:absolute; left:50%; top:50%; width:220px; height:60px; margin:-30px 0 0 -110px; border-radius:50%; border:14px solid rgba(255,143,171,0.55); transform:rotateX(80deg); }
+  .planet-moon{ position:absolute; left:50%; top:0; width:16px; height:16px; margin-left:-8px; border-radius:50%; background:radial-gradient(circle at 30% 30%,#fff,var(--pink)); box-shadow:0 0 10px var(--pink); animation:moonOrbit 6s linear infinite; }
+  @keyframes moonOrbit{ from{ transform:rotate(0deg) translateX(120px) rotate(0deg); } to{ transform:rotate(360deg) translateX(120px) rotate(-360deg); } }
+
+  /* friendly floating balloons — appeal to kids */
+  .balloon{ position:absolute; width:44px; height:54px; border-radius:50%/58% 58% 42% 42%; animation:balloonFloat 6s ease-in-out infinite; }
+  .balloon::after{ content:""; position:absolute; left:50%; bottom:-38px; width:1px; height:38px; background:rgba(237,237,230,0.4); transform:translateX(-50%); }
+  .balloon.b1{ left:2%; bottom:8%; background:radial-gradient(circle at 30% 25%,#fff,var(--teal) 55%,var(--teal-dim)); animation-delay:0s; }
+  .balloon.b2{ left:44%; bottom:0%; width:36px; height:44px; background:radial-gradient(circle at 30% 25%,#fff,var(--pink) 55%,#a33c55); animation-delay:1.2s; }
+  .balloon.b3{ left:70%; bottom:6%; width:30px; height:38px; background:radial-gradient(circle at 30% 25%,#fff,var(--orange) 55%,#7a3418); animation-delay:2.4s; }
+  @keyframes balloonFloat{ 0%,100%{ transform:translateY(0) rotate(-3deg); } 50%{ transform:translateY(-22px) rotate(3deg); } }
+
+  .playground-hint{ font-family:'Space Mono',monospace; font-size:0.75rem; color:var(--muted); letter-spacing:0.05em; }
+
+  /* FLOWER + STAR GARDEN */
+  .garden-section{ min-height:80vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3rem; overflow:hidden; }
+  .garden-caption{ text-align:center; max-width:30rem; }
+  .garden-caption .eyebrow{ justify-content:center; }
+  .garden-caption h2{ font-size:clamp(1.6rem,4vw,2.6rem); margin-bottom:0.6rem; }
+  .garden-caption p{ color:var(--muted); font-size:0.98rem; line-height:1.6; }
+  .garden-stage{ position:relative; width:100%; max-width:960px; height:300px; perspective:900px; }
+  .flower{ position:absolute; transform-style:preserve-3d; animation:floatY 5s ease-in-out infinite; }
+  .flower .petal{ position:absolute; width:34px; height:60px; border-radius:50% 50% 0 50%; top:50%; left:50%; transform-origin:bottom center; }
+  .flower.f-a{ left:4%; top:32%; width:70px; height:70px; }
+  .flower.f-b{ left:26%; top:4%; width:56px; height:56px; animation-delay:0.6s; }
+  .flower.f-c{ left:48%; top:38%; width:80px; height:80px; animation-delay:1.2s; }
+  .flower.f-d{ left:70%; top:6%; width:60px; height:60px; animation-delay:1.8s; }
+  .flower.f-e{ left:90%; top:34%; width:64px; height:64px; animation-delay:2.4s; }
+  .flower .petal.p1{ transform:translate(-50%,-100%) rotate(0deg); background:linear-gradient(180deg,var(--teal),var(--teal-dim)); }
+  .flower .petal.p2{ transform:translate(-50%,-100%) rotate(60deg); background:linear-gradient(180deg,var(--pink),#a33c55); }
+  .flower .petal.p3{ transform:translate(-50%,-100%) rotate(120deg); background:linear-gradient(180deg,var(--orange),#7a3418); }
+  .flower .petal.p4{ transform:translate(-50%,-100%) rotate(180deg); background:linear-gradient(180deg,var(--teal),var(--teal-dim)); }
+  .flower .petal.p5{ transform:translate(-50%,-100%) rotate(240deg); background:linear-gradient(180deg,var(--pink),#a33c55); }
+  .flower .petal.p6{ transform:translate(-50%,-100%) rotate(300deg); background:linear-gradient(180deg,var(--orange),#7a3418); }
+  .flower .center{ position:absolute; top:50%; left:50%; width:20px; height:20px; border-radius:50%; background:var(--text); transform:translate(-50%,-50%); box-shadow:0 0 10px rgba(237,237,230,0.5); }
+  @keyframes floatY{ 0%,100%{ transform:translateY(0) rotateZ(0deg); } 50%{ transform:translateY(-18px) rotateZ(8deg); } }
+
+  .star-deco{
+    position:absolute; width:30px; height:30px;
+    background:linear-gradient(160deg, var(--gold), #b8823a);
+    clip-path:polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    animation:starSpin 6s ease-in-out infinite;
+    box-shadow:0 0 16px rgba(255,209,102,0.5);
+  }
+  .star-deco.s-a{ left:15%; top:12%; }
+  .star-deco.s-b{ left:60%; top:14%; width:22px; height:22px; animation-delay:1s; }
+  @keyframes starSpin{ 0%,100%{ transform:translateY(0) rotate(0deg) scale(1); } 50%{ transform:translateY(-14px) rotate(180deg) scale(1.15); } }
+
+  /* ABOUT */
+  .about-grid{ display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:start; }
+  .about-grid h2{ font-size:clamp(1.8rem,4vw,2.8rem); margin-bottom:1.5rem; }
+  .about-grid p{ color:var(--muted); line-height:1.75; font-size:1.02rem; }
+  .about-grid p + p{ margin-top:1.2rem; }
+  .stat-list{ display:flex; flex-direction:column; gap:1.6rem; }
+  .stat{ border-top:1px solid var(--line); padding-top:1rem; }
+  .stat .num{ font-family:'Unbounded'; font-weight:800; font-size:2.4rem; color:var(--orange); }
+  .stat .label{ color:var(--muted); font-size:0.85rem; letter-spacing:0.04em; text-transform:uppercase; }
+  @media (max-width:860px){ .about-grid{ grid-template-columns:1fr; } }
+
+  /* LEVEL UP */
+  .levelup-head{ margin-bottom:3rem; }
+  .levelup-head h2{ font-size:clamp(1.8rem,4vw,2.8rem); }
+  .xp-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.4rem; }
+  .xp-card{ background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:14px; padding:1.6rem 1.8rem; backdrop-filter:blur(10px); transition:transform 0.4s ease, box-shadow 0.4s ease; }
+  .xp-card:hover{ transform:perspective(600px) rotateX(4deg) translateY(-4px); box-shadow:0 14px 34px rgba(0,0,0,0.35); }
+  .xp-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.9rem; }
+  .xp-top .tool{ font-family:'Inter'; font-weight:700; font-size:1.02rem; }
+  .xp-top .lvl{ font-family:'Space Mono',monospace; font-size:0.75rem; color:var(--orange); letter-spacing:0.05em; }
+  .xp-track{ height:10px; background:rgba(237,237,230,0.08); border:1px solid var(--glass-border); border-radius:6px; overflow:hidden; }
+  .xp-fill{ height:100%; width:0%; border-radius:6px; background:linear-gradient(90deg,var(--teal),var(--orange)); transition:width 1.3s cubic-bezier(.16,.8,.3,1); box-shadow:0 0 12px rgba(46,196,182,0.4); }
+  .xp-note{ margin-top:0.7rem; font-size:0.85rem; color:var(--muted); }
+  @media (max-width:860px){ .xp-grid{ grid-template-columns:1fr; } }
+
+  .achievements{ display:flex; flex-wrap:wrap; gap:0.9rem; margin-top:2.6rem; }
+  .ach{ display:flex; align-items:center; gap:0.55rem; padding:0.65rem 1.15rem; border:1px solid var(--glass-border); border-radius:999px; background:var(--glass-bg); backdrop-filter:blur(8px); font-family:'Space Mono',monospace; font-size:0.78rem; color:var(--muted); transform:scale(0.75); opacity:0; transition:all 0.5s cubic-bezier(.16,.8,.3,1); }
+  .ach.in{ transform:scale(1); opacity:1; }
+  .ach .icon{ color:var(--orange); }
+
+  /* PROCESS */
+  .process-list{ display:flex; flex-direction:column; }
+  .p-step{ display:grid; grid-template-columns:110px 1fr 1fr; gap:2rem; padding:2.2rem 0; border-top:1px solid var(--line); align-items:start; }
+  .process-list .p-step:last-child{ border-bottom:1px solid var(--line); }
+  .p-step .tc{ font-family:'Space Mono',monospace; font-size:0.78rem; color:var(--orange); padding-top:0.3rem; }
+  .p-step h3{ font-family:'Inter'; font-weight:700; text-transform:none; letter-spacing:normal; font-size:1.3rem; }
+  .p-step p{ color:var(--muted); line-height:1.6; font-size:0.95rem; }
+  @media (max-width:760px){ .p-step{ grid-template-columns:1fr; gap:0.6rem; } }
+
+  /* GAME */
+  .game-section{ text-align:center; }
+  .game-head{ margin-bottom:2rem; }
+  .game-head h2{ font-size:clamp(1.8rem,4vw,2.8rem); }
+  .game-head p{ color:var(--muted); margin-top:0.6rem; }
+  .game-score{ font-family:'Space Mono',monospace; font-size:1rem; color:var(--orange); margin-bottom:1.2rem; }
+  .game-stage{ position:relative; width:100%; height:380px; background:var(--glass-bg); border:1px solid var(--glass-border); backdrop-filter:blur(10px); border-radius:14px; overflow:hidden; cursor:pointer; }
+  .bubble{ position:absolute; border-radius:50%; background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), var(--teal) 60%, var(--teal-dim)); box-shadow:0 0 14px rgba(46,196,182,0.5); transform:scale(0); animation:bubbleIn 0.35s forwards; }
+  .bubble.pink{ background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), var(--pink) 60%, #a33c55); box-shadow:0 0 14px rgba(255,143,171,0.5); }
+  .bubble.orange{ background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), var(--orange) 60%, #7a3418); box-shadow:0 0 14px rgba(255,107,53,0.5); }
+  @keyframes bubbleIn{ to{ transform:scale(1); } }
+  .bubble.pop{ animation:bubblePop 0.3s forwards; pointer-events:none; }
+  @keyframes bubblePop{ to{ transform:scale(1.6); opacity:0; } }
+  .game-hint{ margin-top:1rem; font-family:'Space Mono',monospace; font-size:0.75rem; color:var(--muted); }
+
+  /* GIFT REVEAL */
+  .gift-section{ text-align:center; padding-top:min(10vh,5rem); }
+  .gift-caption h2{ font-size:clamp(1.8rem,4vw,2.8rem); margin-bottom:0.5rem; }
+  .gift-caption p{ color:var(--muted); }
+  .gift-box{ position:relative; width:180px; height:170px; margin:3.5rem auto 0; }
+  .gift-base{ position:absolute; bottom:0; left:0; width:180px; height:110px; background:linear-gradient(135deg,var(--teal),var(--teal-dim)); border-radius:8px; box-shadow:0 20px 40px rgba(0,0,0,0.4); }
+  .ribbon-v{ position:absolute; bottom:0; left:50%; width:18px; height:110px; background:var(--text); opacity:0.85; transform:translateX(-50%); }
+  .gift-lid{ position:absolute; top:70px; left:-10px; width:200px; height:36px; background:linear-gradient(135deg,var(--orange),#7a3418); border-radius:8px; transform-origin:15% center; transition:transform 1s cubic-bezier(.34,1.56,.64,1); box-shadow:0 10px 20px rgba(0,0,0,0.35); }
+  .ribbon-h{ position:absolute; top:82px; left:-10px; width:200px; height:14px; background:var(--text); opacity:0.85; z-index:2; }
+  .gift-message{ position:absolute; top:-30px; left:50%; width:280px; transform:translate(-50%,10px); opacity:0; transition:opacity 0.7s, transform 0.7s; font-family:'Space Mono',monospace; font-size:0.82rem; color:var(--muted); }
+  .gift-box.opened .gift-lid{ transform:translate(20px,-70px) rotate(-45deg); }
+  .gift-box.opened .gift-message{ opacity:1; transform:translate(-50%,-40px); }
+  .confetti{ position:absolute; top:60%; left:50%; width:8px; height:8px; opacity:1; animation:confettiBurst 1s ease-out forwards; z-index:3; }
+  @keyframes confettiBurst{ to{ transform:translate(var(--dx), var(--dy)) rotate(720deg); opacity:0; } }
+
+  /* CONTACT */
+  .contact{ text-align:center; padding-bottom:min(24vh,11rem); }
+  .contact h2{ font-size:clamp(2.2rem,8vw,5rem); }
+  .contact h2 .accent{ color:var(--teal); }
+  .contact p{ color:var(--muted); margin-top:1.3rem; font-size:1.05rem; }
+  .cta-row{ display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+  .cta-btn{ display:inline-flex; align-items:center; gap:0.7rem; margin-top:2.5rem; padding:1rem 2.2rem; border-radius:999px; background:var(--orange); color:#141414; font-weight:700; font-size:0.95rem; text-decoration:none; letter-spacing:0.02em; transition:transform 0.3s ease, box-shadow 0.3s ease; box-shadow:0 0 0 rgba(255,107,53,0); }
+  .cta-btn:hover{ transform:translateY(-2px); box-shadow:0 8px 30px rgba(255,107,53,0.35); }
+  .cta-btn-alt{ background:transparent; color:var(--text); border:1px solid var(--glass-border); }
+  .cta-btn-alt:hover{ box-shadow:0 8px 30px rgba(46,196,182,0.25); border-color:var(--teal); }
+  .socials{ display:flex; justify-content:center; gap:2rem; margin-top:3rem; font-family:'Space Mono',monospace; font-size:0.8rem; }
+  .socials a{ color:var(--muted); text-decoration:none; border-bottom:1px solid transparent; transition:all 0.3s; }
+  .socials a:hover{ color:var(--text); border-color:var(--teal); }
+
+  footer{ text-align:center; padding:2rem 6vw 4rem; font-family:'Space Mono',monospace; font-size:0.7rem; color:var(--muted); position:relative; z-index:2; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+    .reveal{ opacity:1; transform:none; }
+    .cube{ transform:rotateX(-18deg) rotateY(20deg) !important; }
+    .iris{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="iris" id="iris"></div>
+<div class="starfield" id="starfield"></div>
+
+<nav>
+  <a href="#top" class="brand">NEXR<span>1</span>.AE</a>
+  <ul class="nav-links">
+    <li><a href="#arplay">3D/AR</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#levelup">Skills</a></li>
+    <li><a href="#process">Process</a></li>
+    <li><a href="#playzone">Play</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<section class="hero" id="top">
+  <div class="eyebrow">Nevin Manoj — Motion Editor</div>
+  <h1>EDITING THAT<span class="line2">MOVES.</span></h1>
+  <p class="hero-sub">A motion editor working across After Effects, Alight Motion, and CapCut — building kinetic type, VFX, and standout edits for creators and small brands who want their content to feel bigger than its budget.</p>
+  <div class="hero-meta">
+    <div>SOFTWARE<strong>After Effects · Alight Motion · CapCut</strong></div>
+    <div>EXPERIENCE<strong>2 Years</strong></div>
+    <div>STATUS<strong>Open for projects</strong></div>
+  </div>
+  <div class="scroll-cue">SCROLL</div>
+</section>
+
+<div class="marquee-section">
+  <div class="marquee-track">
+    <span>AFTER EFFECTS</span><span class="accent-word">ALIGHT MOTION</span><span>CAPCUT</span><span>MOTION GRAPHICS</span><span class="accent-word">VFX</span><span>SOUND SYNC</span>
+    <span>AFTER EFFECTS</span><span class="accent-word">ALIGHT MOTION</span><span>CAPCUT</span><span>MOTION GRAPHICS</span><span class="accent-word">VFX</span><span>SOUND SYNC</span>
+  </div>
+</div>
+
+<section class="figure-section">
+  <div class="figure-caption reveal">
+    <div class="eyebrow">Keep moving</div>
+    <h2>Every frame is a<br>choice to keep going.</h2>
+    <p>Editing is a hundred small decisions repeated until something clicks. Move your cursor here, or just scroll — it keeps turning either way.</p>
+  </div>
+  <div class="cube-outer" id="cubeOuter">
+    <div class="cube-wrap" id="cubeWrap">
+      <div class="glass-shard shard-a"></div>
+      <div class="glass-shard shard-b"></div>
+      <div class="glass-shard shard-c"></div>
+      <div class="orbit-tilt o1"><div class="orbit-spin"><div class="orbit-ring"></div><div class="sphere"></div></div></div>
+      <div class="orbit-tilt o2"><div class="orbit-spin"><div class="orbit-ring"></div><div class="sphere"></div></div></div>
+      <div class="orbit-tilt o3"><div class="orbit-spin"><div class="orbit-ring"></div><div class="sphere"></div></div></div>
+      <div class="cube-stage">
+        <div class="cube" id="cube">
+          <div class="face f1">CUT</div>
+          <div class="face f2">PLAY</div>
+          <div class="face f3">MOVE</div>
+          <div class="face f4">BUILD</div>
+          <div class="face f5">SHIP</div>
+          <div class="face f6">REPEAT</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="playground-section" id="arplay">
+  <div class="playground-caption reveal">
+    <span class="ar-badge">AR &amp; Motion Graphics ready</span>
+    <div class="eyebrow">A 3D playground</div>
+    <h2>Little worlds, built<br>to make anyone smile.</h2>
+    <p>Rockets, ringed planets, and drifting balloons — playful 3D scenes that work just as well in a kid's storybook video as they do in a brand's launch reel. Move your cursor to tilt the scene, or just keep scrolling.</p>
+  </div>
+  <div class="playground-stage" id="playgroundStage">
+    <div class="rocket-outer" id="rocketOuter">
+      <div class="rocket-wrap" id="rocketWrap">
+        <div class="rocket-flame"></div>
+        <div class="rocket-body">
+          <div class="rocket-window"></div>
+        </div>
+        <div class="rocket-nose"></div>
+        <div class="rocket-fin left"></div>
+        <div class="rocket-fin right"></div>
+      </div>
+    </div>
+    <div class="planet-outer">
+      <div class="planet-wrap">
+        <div class="planet-ring"></div>
+        <div class="planet-sphere"></div>
+        <div class="planet-moon"></div>
+      </div>
+    </div>
+    <div class="balloon b1"></div>
+    <div class="balloon b2"></div>
+    <div class="balloon b3"></div>
+  </div>
+  <div class="playground-hint">Tip: tilt with your cursor, or tilt your phone — every scene is built from real 3D, not flat images</div>
+</section>
+
+<section class="garden-section">
+  <div class="garden-caption reveal">
+    <div class="eyebrow">A little color</div>
+    <h2>Creativity grows<br>in small pieces.</h2>
+    <p>Flowers and stars drift as you scroll — a small, playful break between the serious parts of the page.</p>
+  </div>
+  <div class="garden-stage" id="garden">
+    <div class="flower f-a"><div class="petal p1"></div><div class="petal p2"></div><div class="petal p3"></div><div class="petal p4"></div><div class="petal p5"></div><div class="petal p6"></div><div class="center"></div></div>
+    <div class="flower f-b"><div class="petal p1"></div><div class="petal p2"></div><div class="petal p3"></div><div class="petal p4"></div><div class="petal p5"></div><div class="petal p6"></div><div class="center"></div></div>
+    <div class="flower f-c"><div class="petal p1"></div><div class="petal p2"></div><div class="petal p3"></div><div class="petal p4"></div><div class="petal p5"></div><div class="petal p6"></div><div class="center"></div></div>
+    <div class="flower f-d"><div class="petal p1"></div><div class="petal p2"></div><div class="petal p3"></div><div class="petal p4"></div><div class="petal p5"></div><div class="petal p6"></div><div class="center"></div></div>
+    <div class="flower f-e"><div class="petal p1"></div><div class="petal p2"></div><div class="petal p3"></div><div class="petal p4"></div><div class="petal p5"></div><div class="petal p6"></div><div class="center"></div></div>
+    <div class="star-deco s-a"></div>
+    <div class="star-deco s-b"></div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="eyebrow">Why work with me</div>
+  <div class="about-grid reveal">
+    <div>
+      <h2>Your content, edited<br>to look expensive.</h2>
+      <p>Every edit is built to earn attention in the first few seconds and hold it to the end — motion graphics, VFX, and pacing that makes a channel or brand feel bigger than its budget.</p>
+      <p>Fast turnaround, revisions until it's right, and delivery in whatever spec your platform needs. No wasted time, no guesswork.</p>
+    </div>
+    <div class="stat-list">
+      <div class="stat"><div class="num">2</div><div class="label">Years Editing</div></div>
+      <div class="stat"><div class="num">3</div><div class="label">Tools Mastered</div></div>
+      <div class="stat"><div class="num">24h</div><div class="label">Typical Turnaround</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="levelup">
+  <div class="eyebrow">Skill tree</div>
+  <div class="levelup-head reveal">
+    <h2>Leveled up in the<br>tools that matter.</h2>
+  </div>
+  <div class="xp-grid">
+    <div class="xp-card reveal">
+      <div class="xp-top"><span class="tool">After Effects</span><span class="lvl">LVL 6</span></div>
+      <div class="xp-track"><div class="xp-fill" data-target="60"></div></div>
+      <div class="xp-note">Motion graphics, VFX composites, kinetic type</div>
+    </div>
+    <div class="xp-card reveal">
+      <div class="xp-top"><span class="tool">Alight Motion</span><span class="lvl">LVL 4</span></div>
+      <div class="xp-track"><div class="xp-fill" data-target="40"></div></div>
+      <div class="xp-note">Mobile-native animation for Reels & Shorts</div>
+    </div>
+    <div class="xp-card reveal">
+      <div class="xp-top"><span class="tool">CapCut</span><span class="lvl">LVL 10</span></div>
+      <div class="xp-track"><div class="xp-fill" data-target="100"></div></div>
+      <div class="xp-note">Fast turnaround cuts, captions, transitions</div>
+    </div>
+  </div>
+  <div class="achievements">
+    <div class="ach"><span class="icon">★</span>24H Turnaround Streak</div>
+    <div class="ach"><span class="icon">★</span>Multi-Platform Delivery</div>
+    <div class="ach"><span class="icon">★</span>Unlimited Revisions</div>
+  </div>
+</section>
+
+<section id="process">
+  <div class="eyebrow">How it works</div>
+  <div class="reveal">
+    <h2 style="font-size:clamp(1.8rem,4vw,2.8rem); margin-bottom:1rem;">Four steps.<br>One finished edit.</h2>
+  </div>
+  <div class="process-list">
+    <div class="p-step reveal">
+      <div class="tc">STEP 01</div>
+      <h3>Cut</h3>
+      <p>Rough assembly — structure and pacing locked before anything else.</p>
+    </div>
+    <div class="p-step reveal">
+      <div class="tc">STEP 02</div>
+      <h3>Polish</h3>
+      <p>Sound sync, small fixes, and pacing cleanup before motion work begins.</p>
+    </div>
+    <div class="p-step reveal">
+      <div class="tc">STEP 03</div>
+      <h3>Motion</h3>
+      <p>Type, VFX, and transitions built in After Effects and Alight Motion, synced to sound.</p>
+    </div>
+    <div class="p-step reveal">
+      <div class="tc">STEP 04</div>
+      <h3>Deliver</h3>
+      <p>Export in the exact spec your platform needs — no guesswork.</p>
+    </div>
+  </div>
+</section>
+
+<section class="game-section" id="playzone">
+  <div class="game-head reveal">
+    <div class="eyebrow" style="justify-content:center;">Take a break</div>
+    <h2>Pop the bubbles.</h2>
+    <p>Just for fun — click or tap the bubbles before they drift away.</p>
+  </div>
+  <div class="game-score">SCORE: <span id="score">0</span></div>
+  <div class="game-stage" id="gameStage"></div>
+  <div class="game-hint">Scroll into view to start · bubbles pause when you scroll away</div>
+</section>
+
+<section class="gift-section" id="gift">
+  <div class="gift-caption reveal">
+    <div class="eyebrow" style="justify-content:center;">A small thank you</div>
+    <h2>You've got a gift.</h2>
+    <p>For sticking around this long.</p>
+  </div>
+  <div class="gift-box" id="giftBox">
+    <div class="gift-base"></div>
+    <div class="ribbon-v"></div>
+    <div class="ribbon-h"></div>
+    <div class="gift-lid"></div>
+    <div class="gift-message" id="giftMessage">Thanks for playing — let's build something great together.</div>
+  </div>
+</section>
+
+<section class="contact reveal" id="contact">
+  <h2>LET'S CUT<br>SOMETHING <span class="accent">GREAT.</span></h2>
+  <p>Currently taking on new projects — reply within 24 hours.</p>
+  <div class="cta-row">
+    <a href="mailto:xpnevin@gmail.com" class="cta-btn">Start a project →</a>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLScMMtdlPvcL6o0XBwXqrJbJ3QDt0xGXV8yw5osTftCmaxq7Mw/viewform?usp=sharing&ouid=102346170886269652903" class="cta-btn cta-btn-alt" target="_blank" rel="noopener">Fill out project form →</a>
+  </div>
+  <div class="socials">
+    <a href="https://www.instagram.com/nexr1.ae/" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://www.youtube.com/@NEXR1AE" target="_blank" rel="noopener">YouTube</a>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLScMMtdlPvcL6o0XBwXqrJbJ3QDt0xGXV8yw5osTftCmaxq7Mw/viewform?usp=sharing&ouid=102346170886269652903" target="_blank" rel="noopener">Contact Form</a>
+  </div>
+</section>
+
+<footer>© 2026 Nevin Manoj (NEXR1.AE) — Motion Editing</footer>
+
+<script>
+  // camera iris intro
+  var iris = document.getElementById('iris');
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      iris.classList.add('open');
+      setTimeout(function(){ if(iris.parentNode) iris.parentNode.removeChild(iris); }, 1500);
+    }, 200);
+  });
+
+  // ambient starfield
+  var starfield = document.getElementById('starfield');
+  for(var s=0; s<55; s++){
+    var dot = document.createElement('div');
+    dot.className = 'star-dot';
+    var size = 1 + Math.random()*2;
+    dot.style.width = size + 'px';
+    dot.style.height = size + 'px';
+    dot.style.top = Math.random()*100 + '%';
+    dot.style.left = Math.random()*100 + '%';
+    dot.style.animationDuration = (2 + Math.random()*3) + 's';
+    dot.style.animationDelay = (Math.random()*3) + 's';
+    starfield.appendChild(dot);
+  }
+
+  // reveal on scroll
+  var revealEls = document.querySelectorAll('.reveal');
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){ entry.target.classList.add('in'); obs.unobserve(entry.target); }
+    });
+  }, { threshold:0.15 });
+  revealEls.forEach(function(el){ obs.observe(el); });
+
+  // achievement pop-in
+  var achEls = document.querySelectorAll('.ach');
+  var achObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry, i){
+      if(entry.isIntersecting){ setTimeout(function(){ entry.target.classList.add('in'); }, i * 90); achObs.unobserve(entry.target); }
+    });
+  }, { threshold:0.3 });
+  achEls.forEach(function(el){ achObs.observe(el); });
+
+  // xp bar fill
+  var xpFills = document.querySelectorAll('.xp-fill');
+  var xpObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        var el = entry.target;
+        var target = el.getAttribute('data-target');
+        requestAnimationFrame(function(){ el.style.width = target + '%'; });
+        xpObs.unobserve(el);
+      }
+    });
+  }, { threshold:0.4 });
+  xpFills.forEach(function(el){ xpObs.observe(el); });
+
+  // cube rotation (scroll) + mouse tilt (cursor) + flower parallax + hero parallax
+  var cube = document.getElementById('cube');
+  var cubeWrap = document.getElementById('cubeWrap');
+  var cubeOuter = document.getElementById('cubeOuter');
+  var hero = document.querySelector('.hero');
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function onScrollAnim(){
+    if(reduceMotion) return;
+    var scrollTop = window.scrollY;
+    var rotY = scrollTop * 0.25;
+    var rotX = -18 + Math.sin(scrollTop * 0.002) * 6;
+    cube.style.transform = 'rotateX(' + rotX + 'deg) rotateY(' + rotY + 'deg)';
+
+    var flowers = document.querySelectorAll('.flower');
+    flowers.forEach(function(f, i){
+      var drift = Math.sin(scrollTop * 0.003 + i) * 14;
+      f.style.transform = 'translateY(' + drift + 'px)';
+    });
+
+    if(rocketWrap){
+      var rocketSpin = scrollTop * 0.15;
+      rocketWrap.style.setProperty('--scroll-rot', rocketSpin + 'deg');
+      rocketWrap.style.transform = 'rotateY(' + rocketSpin + 'deg)';
+    }
+  }
+  window.addEventListener('scroll', onScrollAnim, { passive:true });
+  onScrollAnim();
+
+  if(!reduceMotion && cubeOuter){
+    cubeOuter.addEventListener('mousemove', function(e){
+      var rect = cubeOuter.getBoundingClientRect();
+      var px = (e.clientX - rect.left) / rect.width - 0.5;
+      var py = (e.clientY - rect.top) / rect.height - 0.5;
+      cubeWrap.style.transform = 'rotateY(' + (px*22) + 'deg) rotateX(' + (-py*22) + 'deg)';
+    });
+    cubeOuter.addEventListener('mouseleave', function(){
+      cubeWrap.style.transform = 'rotateY(0deg) rotateX(0deg)';
+    });
+  }
+
+  // rocket 3D tilt (mouse) — part of the AR-style 3D playground
+  var rocketOuter = document.getElementById('rocketOuter');
+  var rocketWrap = document.getElementById('rocketWrap');
+  var playgroundStage = document.getElementById('playgroundStage');
+  if(!reduceMotion && playgroundStage && rocketWrap){
+    playgroundStage.addEventListener('mousemove', function(e){
+      var rect = playgroundStage.getBoundingClientRect();
+      var px = (e.clientX - rect.left) / rect.width - 0.5;
+      var py = (e.clientY - rect.top) / rect.height - 0.5;
+      rocketWrap.style.transform = 'rotateY(' + (px*30) + 'deg) rotateX(' + (-py*20) + 'deg)';
+    });
+    playgroundStage.addEventListener('mouseleave', function(){
+      rocketWrap.style.transform = 'rotateY(0deg) rotateX(0deg)';
+    });
+  }
+
+  if(!reduceMotion){
+    window.addEventListener('mousemove', function(e){
+      var x = (e.clientX / window.innerWidth - 0.5) * 10;
+      var y = (e.clientY / window.innerHeight - 0.5) * 6;
+      hero.style.transform = 'translate(' + (-x) + 'px,' + (-y) + 'px)';
+    });
+  }
+
+  // bubble pop mini-game
+  var stage = document.getElementById('gameStage');
+  var scoreEl = document.getElementById('score');
+  var score = 0;
+  var spawnInterval = null;
+  var colors = ['', 'pink', 'orange'];
+
+  function spawnBubble(){
+    if(!stage) return;
+    var size = 30 + Math.random() * 40;
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble ' + colors[Math.floor(Math.random()*colors.length)];
+    bubble.style.width = size + 'px';
+    bubble.style.height = size + 'px';
+    bubble.style.left = Math.random() * (stage.clientWidth - size) + 'px';
+    bubble.style.top = Math.random() * (stage.clientHeight - size) + 'px';
+    stage.appendChild(bubble);
+
+    var life = setTimeout(function(){ if(bubble.parentNode) bubble.parentNode.removeChild(bubble); }, 2600);
+
+    bubble.addEventListener('click', function(){
+      clearTimeout(life);
+      bubble.classList.add('pop');
+      score++;
+      scoreEl.textContent = score;
+      setTimeout(function(){ if(bubble.parentNode) bubble.parentNode.removeChild(bubble); }, 300);
+    });
+  }
+
+  var gameObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){ if(!spawnInterval) spawnInterval = setInterval(spawnBubble, 750); }
+      else { if(spawnInterval){ clearInterval(spawnInterval); spawnInterval = null; } }
+    });
+  }, { threshold:0.2 });
+  if(stage) gameObs.observe(stage);
+
+  // gift box reveal + confetti
+  var giftBox = document.getElementById('giftBox');
+  var giftOpened = false;
+  function burstConfetti(){
+    var colorsC = ['#2ec4b6','#ff6b35','#ff8fab','#edede6'];
+    for(var i=0;i<18;i++){
+      var c = document.createElement('div');
+      c.className = 'confetti';
+      var angle = Math.random() * Math.PI * 2;
+      var dist = 60 + Math.random()*90;
+      c.style.setProperty('--dx', Math.cos(angle)*dist + 'px');
+      c.style.setProperty('--dy', Math.sin(angle)*dist - 40 + 'px');
+      c.style.background = colorsC[i % colorsC.length];
+      giftBox.appendChild(c);
+      setTimeout(function(el){ return function(){ if(el.parentNode) el.parentNode.removeChild(el); }; }(c), 1100);
+    }
+  }
+  var giftObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting && !giftOpened){
+        giftOpened = true;
+        giftBox.classList.add('opened');
+        setTimeout(burstConfetti, 300);
+        giftObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold:0.5 });
+  giftObs.observe(giftBox);
+</script>
+
+</body>
+</html>
